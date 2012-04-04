@@ -6,9 +6,9 @@ knockoutの手が届いていないまわりを補完する目的．
 ### 概要
  - utils.model  
  server側のprimarykeyでunique制約．
- - utils.api
+ - utils.api  
  utils.model.Model継承モデルに自動的にマッピングしたり、
- キャッシュはずしたり、encodeURIしたりするGetとPostのutil
+ キャッシュはずしたり、encodeURIしたりするGetとPostのutil.
  - utils.router  
  - (ついで：utils.date)
  
