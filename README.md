@@ -1,6 +1,7 @@
 # nashibao_ko_utils
 ### 目的
 knockoutの手が届いていないまわりを補完する目的．
+主にajaxでの通信からオブジェクトのマッピングを行う．
 
 ### 概要
  - utils.model  
@@ -38,6 +39,12 @@ knockoutの手が届いていないまわりを補完する目的．
 #### utils.api
 
 utils.api.get(url, params, callback)
+
+params = {"key":{class:kls,target:tgt}
+
+urlから取ってきたjsonからkey部分を引きぬいてモデルクラスklsにマッピングしてko.observableArrayであるtgtに
+突っ込んでます．tgtをko.observable()に要対応．
+
 
 	utils.api.get "http://hogehoge",
 		{"boards":{class:app.model.Board, target:app.vm.boards},
