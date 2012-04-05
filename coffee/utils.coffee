@@ -10,6 +10,12 @@ TODO: エラーハンドリング
 
 ###
 
+utils.debug = true
+
+utils.log = (obj) ->
+	if utils.debug
+		console.info obj
+
 class utils.model
 	###
 	model関係のutil
@@ -47,7 +53,7 @@ class utils.model.Model
 	constructor: () ->
 		@pk = ko.observable(-1)
 	map: (fields, param) ->
-		# console.log 'must be overrided'
+		utils.log 'must be overrided'
 
 class utils.api
 	###
@@ -56,15 +62,15 @@ class utils.api
 	###
 
 	@getJSON = (url, data, callback) ->
+		utils.log url
 		$.ajaxSetup {cache: false}
-		url = encodeURI(url)
 		$.getJSON url, data, (data) ->
 			$.ajaxSetup {cache: true}
 			callback data
 
 	@postJSON = (url, data, callback) ->
+		utils.log url
 		$.ajaxSetup {cache: false}
-		url = encodeURI(url)
 		$.ajax {
 			url: url,
 			type: "POST",
@@ -78,7 +84,7 @@ class utils.api
 	# X: ここは本当はdictionaryでparamを渡すようにする.
 	@get = (url, params, callback) ->
 		@getJSON url, (data) ->
-			console.log data
+			utils.log data
 			for key, val of params
 				{class:kls, target:target} = val
 				for jsn in data[key]
@@ -89,7 +95,7 @@ class utils.api
 	@post = (url, param, callback) ->
 		@postJSON url, 'test', (d) ->
 			data = $.evalJSON d.responseText
-			# console.log data
+			utils.log data
 			for key, kls of param
 				jsn = data[key][0]
 				if kls
@@ -100,11 +106,12 @@ class utils.router
 	@decompose = (template) ->
 		obj = {}
 		hash = location.hash
+		utils.log "hashchanged #{hash} to #{template}"
 		props = template.split('/')
 		hashs = hash.split('/')
 		for i in [0..props.length-1]
 			prop = props[i]
-			if prop[0] is ":"
+			if prop.indexOf(":")==0
 				p = prop.replace(":","")
 				if hashs.length > i
 					h = hashs[i]
@@ -114,6 +121,23 @@ class utils.router
 		return obj
 
 class utils.date
+	# safariとieが受け付けるdate用文字列に変換する
+	@reverse_for_safari = (datestr, hoursplitter, datesplitter) ->
+		daystr = datestr
+		hourstr = false
+		if hoursplitter
+			date_hour = datestr.split(hoursplitter)
+			if date_hour.length!=2
+				return datestr
+			daystr = date_hour[0]
+			hourstr = date_hour[1]
+		day_month_year = daystr.split(datesplitter)
+		if day_month_year.length!=3
+			return datestr
+		daystr = "#{day_month_year[2]}/#{day_month_year[1]}/#{day_month_year[0]}"
+		if hourstr
+			return "#{daystr} #{hourstr}"
+		return daystr
 	@convertToJapaneseLikeTwitter = (date) ->
 		today = new Date()
 		interval = today - date

@@ -14,6 +14,12 @@
   TODO: エラーハンドリング
   */
 
+  utils.debug = true;
+
+  utils.log = function(obj) {
+    if (utils.debug) return console.info(obj);
+  };
+
   utils.model = (function() {
 
     function model() {}
@@ -66,7 +72,9 @@
       this.pk = ko.observable(-1);
     }
 
-    Model.prototype.map = function(fields, param) {};
+    Model.prototype.map = function(fields, param) {
+      return utils.log('must be overrided');
+    };
 
     return Model;
 
@@ -82,10 +90,10 @@
     */
 
     api.getJSON = function(url, data, callback) {
+      utils.log(url);
       $.ajaxSetup({
         cache: false
       });
-      url = encodeURI(url);
       return $.getJSON(url, data, function(data) {
         $.ajaxSetup({
           cache: true
@@ -95,10 +103,10 @@
     };
 
     api.postJSON = function(url, data, callback) {
+      utils.log(url);
       $.ajaxSetup({
         cache: false
       });
-      url = encodeURI(url);
       return $.ajax({
         url: url,
         type: "POST",
@@ -116,7 +124,7 @@
     api.get = function(url, params, callback) {
       return this.getJSON(url, function(data) {
         var jsn, key, kls, obj, target, val, _i, _len, _ref;
-        console.log(data);
+        utils.log(data);
         for (key in params) {
           val = params[key];
           kls = val["class"], target = val.target;
@@ -135,6 +143,7 @@
       return this.postJSON(url, 'test', function(d) {
         var data, jsn, key, kls, obj;
         data = $.evalJSON(d.responseText);
+        utils.log(data);
         for (key in param) {
           kls = param[key];
           jsn = data[key][0];
@@ -156,11 +165,12 @@
       var h, hash, hashs, i, obj, p, prop, props, _ref;
       obj = {};
       hash = location.hash;
+      utils.log("hashchanged " + hash + " to " + template);
       props = template.split('/');
       hashs = hash.split('/');
       for (i = 0, _ref = props.length - 1; 0 <= _ref ? i <= _ref : i >= _ref; 0 <= _ref ? i++ : i--) {
         prop = props[i];
-        if (prop[0] === ":") {
+        if (prop.indexOf(":") === 0) {
           p = prop.replace(":", "");
           if (hashs.length > i) {
             h = hashs[i];
@@ -180,6 +190,23 @@
   utils.date = (function() {
 
     function date() {}
+
+    date.reverse_for_safari = function(datestr, hoursplitter, datesplitter) {
+      var date_hour, day_month_year, daystr, hourstr;
+      daystr = datestr;
+      hourstr = false;
+      if (hoursplitter) {
+        date_hour = datestr.split(hoursplitter);
+        if (date_hour.length !== 2) return datestr;
+        daystr = date_hour[0];
+        hourstr = date_hour[1];
+      }
+      day_month_year = daystr.split(datesplitter);
+      if (day_month_year.length !== 3) return datestr;
+      daystr = "" + day_month_year[2] + "/" + day_month_year[1] + "/" + day_month_year[0];
+      if (hourstr) return "" + daystr + " " + hourstr;
+      return daystr;
+    };
 
     date.convertToJapaneseLikeTwitter = function(date) {
       var hour, interval, minutes, today;
