@@ -23,9 +23,7 @@
     */
 
     model.get = function(pk, kls) {
-      console.log(kls.dics());
       if (pk in kls.dics()) {
-        console.log('atta');
         return kls.dics()[pk];
       } else {
         return false;
@@ -34,9 +32,7 @@
 
     model.get_or_create = function(pk, kls) {
       var obj;
-      console.log(kls.dics());
       if (pk in kls.dics()) {
-        console.log('atta');
         return kls.dics()[pk];
       } else {
         obj = new kls();
@@ -120,6 +116,7 @@
     api.get = function(url, params, callback) {
       return this.getJSON(url, function(data) {
         var jsn, key, kls, obj, target, val, _i, _len, _ref;
+        console.log(data);
         for (key in params) {
           val = params[key];
           kls = val["class"], target = val.target;
@@ -127,7 +124,7 @@
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             jsn = _ref[_i];
             obj = utils.model.map(jsn, kls, 'get');
-            target.push(obj);
+            if (target) target.push(obj);
           }
         }
         return callback(data);
@@ -169,7 +166,7 @@
             h = hashs[i];
             obj[p] = h;
           } else {
-            obj[p] = false;
+            obj[p] = void 0;
           }
         }
       }

@@ -83,7 +83,7 @@ class utils.api
 				{class:kls, target:target} = val
 				for jsn in data[key]
 					obj = utils.model.map(jsn, kls, 'get')
-					target.push(obj)
+					target.push(obj) if target
 			callback(data)
 
 	@post = (url, param, callback) ->
