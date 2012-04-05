@@ -70,7 +70,7 @@ urlから取ってきたjsonからkey部分を引きぬいてモデルクラスk
  - observableArrayのsortのタイミングの制御
  - 出来ればknockout, django依存の部分を削除していきたい  
  とくに名前空間（現状はdjangoのinclude依存）．requirejs?
- - エラーハンドリング  
+ - utils.apiのエラーハンドリング  
  jsdeffered利用かなぁ．
  - knockoutが弱いアニメーション部分の補足
  - ディレクトリ構成  

@@ -17,18 +17,14 @@ class utils.model
 
 	# 無ければfalse
 	@get: (pk, kls) ->
-		console.log kls.dics()
 		if pk of kls.dics()
-			console.log 'atta'
 			return kls.dics()[pk]
 		else
 			return false
 
 	# 無ければ作成
 	@get_or_create: (pk, kls) ->
-		console.log kls.dics()
 		if pk of kls.dics()
-			console.log 'atta'
 			return kls.dics()[pk]
 		else
 			obj = new kls()
@@ -82,7 +78,7 @@ class utils.api
 	# X: ここは本当はdictionaryでparamを渡すようにする.
 	@get = (url, params, callback) ->
 		@getJSON url, (data) ->
-			# console.log data
+			console.log data
 			for key, val of params
 				{class:kls, target:target} = val
 				for jsn in data[key]
@@ -114,7 +110,7 @@ class utils.router
 					h = hashs[i]
 					obj[p]=h
 				else
-					obj[p]=false
+					obj[p]=undefined
 		return obj
 
 class utils.date
