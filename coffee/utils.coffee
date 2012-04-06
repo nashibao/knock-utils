@@ -16,6 +16,16 @@ utils.log = (obj) ->
 	if utils.debug
 		console.info obj
 
+# 型を返す
+# @see http://minghai.github.com/library/coffeescript/07_the_bad_parts.html
+utils.type = do ->
+	classToType = {}
+	for name in "Boolean Number String Function Array Date RegExp Undefined Null".split(" ")
+		classToType["[object " + name + "]"] = name.toLowerCase()
+	(obj) ->
+		strType = Object::toString.call(obj)
+		classToType[strType] or "object"
+
 class utils.model
 	###
 	model関係のutil
@@ -138,6 +148,25 @@ class utils.date
 		if hourstr
 			return "#{daystr} #{hourstr}"
 		return daystr
+	# Dateオブジェクト/文字列を任意の文字列に変換する
+	@formatedDate = do ->
+		zFill = (number) ->
+			numStr = String number
+			if numStr.length < 2
+				numStr = '0' + numStr
+			numStr
+		(date, format) ->
+			if utils.type(date) is 'string'
+				dateStrList = date.split /:|-|\s/
+				date = new Date dateStrList[0],
+					parseInt(dateStrList[1]) - 1, dateStrList[2],
+					dateStrList[3], dateStrList[4], dateStrList[5]
+			format.replace(/%Y/, date.getFullYear())
+				.replace(/%m/, zFill(date.getMonth() + 1))
+				.replace(/%d/, zFill(date.getDate()))
+				.replace(/%H/, zFill(date.getHours()))
+				.replace(/%M/, zFill(date.getMinutes()))
+				.replace(/%S/, zFill(date.getSeconds()))
 	@convertToJapaneseLikeTwitter = (date) ->
 		today = new Date()
 		interval = today - date
