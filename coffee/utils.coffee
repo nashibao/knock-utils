@@ -14,7 +14,11 @@ utils.debug = true
 
 utils.log = (obj) ->
 	if utils.debug
-		console.info obj
+		console.log obj
+
+utils.break = () ->
+	if utils.debug
+		throw Error('break')
 
 # 型を返す
 # @see http://minghai.github.com/library/coffeescript/07_the_bad_parts.html
@@ -95,21 +99,24 @@ class utils.api
 	@get = (url, params, callback) ->
 		@getJSON url, (data) ->
 			utils.log data
-			for key, val of params
-				{class:kls, target:target} = val
+			for val in params
+				{key:key, class:kls, target:target, identifier:identifier} = val
+				identifier ?= []
 				for jsn in data[key]
-					obj = utils.model.map(jsn, kls, 'get')
+					obj = utils.model.map(jsn, kls, identifier)
 					target.push(obj) if target
 			callback(data)
 
-	@post = (url, param, callback) ->
+	@post = (url, params, callback) ->
 		@postJSON url, 'test', (d) ->
 			data = $.evalJSON d.responseText
 			utils.log data
-			for key, kls of param
+			for val in params
+				{key:key, class:kls, identifier:identifier} = val
+				identifier ?= []
 				jsn = data[key][0]
 				if kls
-					obj = utils.model.map(jsn, kls, 'post')
+					obj = utils.model.map(jsn, kls, identifier)
 			callback(data)
 
 class utils.router
@@ -144,10 +151,11 @@ class utils.date
 		day_month_year = daystr.split(datesplitter)
 		if day_month_year.length!=3
 			return datestr
-		daystr = "#{day_month_year[2]}/#{day_month_year[1]}/#{day_month_year[0]}"
+		daystr = "#{day_month_year[1]}/#{day_month_year[2]}/#{day_month_year[0]}"
 		if hourstr
 			return "#{daystr} #{hourstr}"
 		return daystr
+
 	# Dateオブジェクト/文字列を任意の文字列に変換する
 	@formatedDate = do ->
 		zFill = (number) ->
@@ -167,17 +175,41 @@ class utils.date
 				.replace(/%H/, zFill(date.getHours()))
 				.replace(/%M/, zFill(date.getMinutes()))
 				.replace(/%S/, zFill(date.getSeconds()))
-	@convertToJapaneseLikeTwitter = (date) ->
+
+	@convertToJapaneseLikeTwitter = (date, nodate=false) ->
 		today = new Date()
 		interval = today - date
 		minutes = Math.round(interval/(1000*60))
 		hour = Math.round(interval/(60*60*1000))
-		if minutes < 10
+		if minutes < 10 and not nodate
 			return "いま"
-		if minutes < 60
+		if minutes < 60 and not nodate
 			return "#{minutes}分前"
-		if hour < 46
-			return "#{hour}時間前"
-		return "#{date.getMonth()}/#{date.getDay()}"
+		if hour < 24
+			if nodate
+				return "今日"
+			else
+				return "#{hour}時間前"
+		return "#{date.getMonth()+1}/#{date.getDate()}"
 
+class utils.tool
+	@_browser = false
+	@browser = () ->
+		if @_browser
+			return @_browser
+		ua = navigator.userAgent.toLowerCase()
+		if ua.indexOf("safari") != -1
+			@_browser = 'safari'
+		else if ua.indexOf("firefox") != -1
+			@_browser = 'firefox'
+		else if ua.indexOf("opera") != -1
+			@_browser = 'opera'
+		else if ua.indexOf("netscape") != -1
+			@_browser = 'netscape'
+		else if ua.indexOf("msie") != -1
+			@_browser = 'ie'
+		else if ua.indexOf("mozilla/4") != -1
+			@_browser = 'netscape'
+		
+		return @_browser
 
