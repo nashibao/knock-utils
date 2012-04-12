@@ -17,15 +17,34 @@
   utils.debug = true;
 
   utils.log = function(obj) {
-    if (utils.debug) return console.info(obj);
+    if (utils.debug) return console.log(obj);
   };
+
+  utils["break"] = function() {
+    if (utils.debug) throw Error('break');
+  };
+
+  utils.type = (function() {
+    var classToType, name, _i, _len, _ref;
+    classToType = {};
+    _ref = "Boolean Number String Function Array Date RegExp Undefined Null".split(" ");
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      name = _ref[_i];
+      classToType["[object " + name + "]"] = name.toLowerCase();
+    }
+    return function(obj) {
+      var strType;
+      strType = Object.prototype.toString.call(obj);
+      return classToType[strType] || "object";
+    };
+  })();
 
   utils.model = (function() {
 
     function model() {}
 
     /*
-    	model関係のutil
+      model関係のutil
     */
 
     model.get = function(pk, kls) {
@@ -85,8 +104,8 @@
     function api() {}
 
     /*
-    	network関係のutil
-    	get, post
+      network関係のutil
+      get, post
     */
 
     api.getJSON = function(url, data, callback) {
@@ -123,15 +142,16 @@
 
     api.get = function(url, params, callback) {
       return this.getJSON(url, function(data) {
-        var jsn, key, kls, obj, target, val, _i, _len, _ref;
+        var identifier, jsn, key, kls, obj, target, val, _i, _j, _len, _len2, _ref;
         utils.log(data);
-        for (key in params) {
-          val = params[key];
-          kls = val["class"], target = val.target;
+        for (_i = 0, _len = params.length; _i < _len; _i++) {
+          val = params[_i];
+          key = val.key, kls = val["class"], target = val.target, identifier = val.identifier;
+          if (identifier == null) identifier = [];
           _ref = data[key];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            jsn = _ref[_i];
-            obj = utils.model.map(jsn, kls, 'get');
+          for (_j = 0, _len2 = _ref.length; _j < _len2; _j++) {
+            jsn = _ref[_j];
+            obj = utils.model.map(jsn, kls, identifier);
             if (target) target.push(obj);
           }
         }
@@ -139,15 +159,17 @@
       });
     };
 
-    api.post = function(url, param, callback) {
+    api.post = function(url, params, callback) {
       return this.postJSON(url, 'test', function(d) {
-        var data, jsn, key, kls, obj;
+        var data, identifier, jsn, key, kls, obj, val, _i, _len;
         data = $.evalJSON(d.responseText);
         utils.log(data);
-        for (key in param) {
-          kls = param[key];
+        for (_i = 0, _len = params.length; _i < _len; _i++) {
+          val = params[_i];
+          key = val.key, kls = val["class"], identifier = val.identifier;
+          if (identifier == null) identifier = [];
           jsn = data[key][0];
-          if (kls) obj = utils.model.map(jsn, kls, 'post');
+          if (kls) obj = utils.model.map(jsn, kls, identifier);
         }
         return callback(data);
       });
@@ -203,24 +225,79 @@
       }
       day_month_year = daystr.split(datesplitter);
       if (day_month_year.length !== 3) return datestr;
-      daystr = "" + day_month_year[2] + "/" + day_month_year[1] + "/" + day_month_year[0];
+      daystr = "" + day_month_year[1] + "/" + day_month_year[2] + "/" + day_month_year[0];
       if (hourstr) return "" + daystr + " " + hourstr;
       return daystr;
     };
 
-    date.convertToJapaneseLikeTwitter = function(date) {
+    date.formatedDate = (function() {
+      var zFill;
+      zFill = function(number) {
+        var numStr;
+        numStr = String(number);
+        if (numStr.length < 2) numStr = '0' + numStr;
+        return numStr;
+      };
+      return function(date, format) {
+        var dateStrList;
+        if (utils.type(date) === 'string') {
+          dateStrList = date.split(/:|-|\s/);
+          date = new Date(dateStrList[0], parseInt(dateStrList[1]) - 1, dateStrList[2], dateStrList[3], dateStrList[4], dateStrList[5]);
+        }
+        return format.replace(/%Y/, date.getFullYear()).replace(/%m/, zFill(date.getMonth() + 1)).replace(/%d/, zFill(date.getDate())).replace(/%H/, zFill(date.getHours())).replace(/%M/, zFill(date.getMinutes())).replace(/%S/, zFill(date.getSeconds()));
+      };
+    })();
+
+    date.convertToJapaneseLikeTwitter = function(date, nodate) {
       var hour, interval, minutes, today;
+      if (nodate == null) nodate = false;
       today = new Date();
       interval = today - date;
       minutes = Math.round(interval / (1000 * 60));
       hour = Math.round(interval / (60 * 60 * 1000));
-      if (minutes < 10) return "いま";
-      if (minutes < 60) return "" + minutes + "分前";
-      if (hour < 46) return "" + hour + "時間前";
-      return "" + (date.getMonth()) + "/" + (date.getDay());
+      if (minutes < 10 && !nodate) return "いま";
+      if (minutes < 60 && !nodate) return "" + minutes + "分前";
+      if (hour < 24) {
+        if (nodate) {
+          return "今日";
+        } else {
+          return "" + hour + "時間前";
+        }
+      }
+      return "" + (date.getMonth() + 1) + "/" + (date.getDate());
     };
 
     return date;
+
+  })();
+
+  utils.tool = (function() {
+
+    function tool() {}
+
+    tool._browser = false;
+
+    tool.browser = function() {
+      var ua;
+      if (this._browser) return this._browser;
+      ua = navigator.userAgent.toLowerCase();
+      if (ua.indexOf("safari") !== -1) {
+        this._browser = 'safari';
+      } else if (ua.indexOf("firefox") !== -1) {
+        this._browser = 'firefox';
+      } else if (ua.indexOf("opera") !== -1) {
+        this._browser = 'opera';
+      } else if (ua.indexOf("netscape") !== -1) {
+        this._browser = 'netscape';
+      } else if (ua.indexOf("msie") !== -1) {
+        this._browser = 'ie';
+      } else if (ua.indexOf("mozilla/4") !== -1) {
+        this._browser = 'netscape';
+      }
+      return this._browser;
+    };
+
+    return tool;
 
   })();
 
